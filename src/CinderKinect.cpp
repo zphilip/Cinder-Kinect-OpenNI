@@ -153,8 +153,10 @@ CinderKinect::Obj::Obj( int deviceIndex )
 	mLastVideoFrameInfrared = mVideoInfrared;
 	mThread = shared_ptr<thread>( new thread( threadedFunc, this ) );
 	// Initialize depth image
-	mDepthSurface	= Surface16u( 640, 480, false, SurfaceChannelOrder::RGB );
-	mRgbDepth		= new Pixel16u[ 640 * 480 * 3 ];
+	mDepthSurface16u	= Surface16u( 640, 480, false, SurfaceChannelOrder::RGB );
+	mDepthSurface8u		= Surface8u(640, 480, false, SurfaceChannelOrder::RGB);
+	mRgbDepth16u		= new Pixel16u[ 640 * 480 * 3 ];
+	mRgbDepth8u			= new Pixel[640 * 480 * 3];
 	mBinary				= false;
 	mFlipped			= false;
 	mGreyScale			= false;
@@ -178,7 +180,7 @@ void CinderKinect::Obj::colorImageCB( CinderKinect::Obj* kinectObj, const void *
 		memcpy( destPixels, rgb, 640 * 480 * sizeof(uint8_t) );		// blast the pixels in
 	else
 		memcpy( destPixels, rgb, 640 * 480 * 3 * sizeof(uint8_t) );		// blast the pixels in
-	kinectObj->mColorBuffers.setActiveBuffer( (uint8_t *)destPixels );			// set this new buffer to be the current active buffer
+	kinectObj->mColorBuffers.setActiveBuffer( (uint8_t *)destPixels );	// set this new buffer to be the current active buffer
 	kinectObj->mNewVideoFrame = true;								// flag that there's a new color frame
 	kinectObj->mLastVideoFrameInfrared = kinectObj->mVideoInfrared;
 }
@@ -197,8 +199,9 @@ void CinderKinect::Obj::depthImageCB( CinderKinect::Obj* kinectObj, const void *
 		uint32_t v = depth[p];
 		destPixels[p] = 65535 - ( v * v ) >> 4;						// 1 / ( 2^10 * 2^10 ) * 2^16 = 2^-4
 	}*/
-	//memcpy( destPixels, d, 640 * 480 * sizeof(uint16_t) );	
+	memcpy( destPixels, d, 640 * 480 * sizeof(uint16_t) );	
 	pixelToDepthSurface( (uint16_t*)d );
+	//pixelToSurface8u(mDepthSurface8u, (uint8_t *)d, true);
 	kinectObj->mNewDepthFrame = true;								// flag that there's a new depth frame
 	kinectObj->mDepthBuffers.setActiveBuffer( (uint16_t *)destPixels );			// set this new buffer to be the current active buffer
 }
@@ -209,7 +212,7 @@ void CinderKinect::threadedFunc( CinderKinect::Obj *kinectObj )
 	{
 		kinectObj->mDevice->Update();
 		const XnDepthPixel* pDepth = kinectObj->mDevice->getDepthMetaData()->Data();
-		//kinectObj->colorImageCB(kinectObj,kinectObj->mDevice->getColoredDepthBuffer());
+		kinectObj->colorImageCB(kinectObj,kinectObj->mDevice->getColorBuffer() );
 		kinectObj->depthImageCB(kinectObj,pDepth);
 	}
 }
@@ -252,13 +255,25 @@ ImageSourceRef CinderKinect::getDepthImage()
 	return ImageSourceRef( new ImageSourceKinectDepth( activeDepth, this->mObj ) );
 }
 
+// Get depth surface
+Surface8u CinderKinect::getDepth() 
+{ 
+	// Lock thread
+	lock_guard<recursive_mutex> lock( this->mObj->mMutex );
+	
+	// Return surface and turn off new flag
+	this->mObj->mNewDepthFrame = false;
+	return this->mObj->mDepthSurface8u;
+
+}
+
 float CinderKinect::getDepthAt( const ci::Vec2i &pos )
 {
 	float depthNorm		= 0.0f;
-	if ( this->mObj->mDepthSurface ) {
+	if ( this->mObj->mDepthSurface16u ) {
 		//float depthraw = RawDepthToMeters(this->mObj->mDepthSurface.getPixel( pos ).r)*1000;
-		float depthraw = this->mObj->mDepthSurface.getPixel( pos ).r;
-		uint16_t depth	= 0x10000 - depthraw;
+		float depthraw = this->mObj->mDepthSurface16u.getPixel( pos ).r;
+		uint16_t depth	= depthraw;
 		depth			= depth << 2;
 		depthNorm		= 1.0f - (float)depth / 65535.0f;
 	}
@@ -291,19 +306,19 @@ float CinderKinect::RawDepthToMeters(uint16_t raw)
 
 void CinderKinect::Obj::pixelToDepthSurface( uint16_t *buffer )
 {
-	int32_t height		= mDepthSurface.getHeight();
-	int32_t width		= mDepthSurface.getWidth();
+	int32_t height		= mDepthSurface16u.getHeight();
+	int32_t width		= mDepthSurface16u.getWidth();
 	int32_t size		= width * height * 6; // 6 is 3 color channels * sizeof( uint16_t )
 
-	Pixel16u* rgbRun	= mRgbDepth;
+	Pixel16u* rgbRun	= mRgbDepth16u;
 	uint16_t* bufferRun	= buffer;
-	memset(mRgbDepth, 0, 640*480*3*sizeof(uint16_t));
+	memset(mRgbDepth16u, 0, 640*480*3*sizeof(uint16_t));
 
 	if ( mFlipped ) {
 		for ( int32_t y = 0; y < height; y++ ) {
 			for ( int32_t x = 0; x < width; x++ ) {
 				bufferRun		= buffer + ( y * width + ( ( width - x ) - 1 ) );
-				rgbRun			= mRgbDepth + ( y * width + x );
+				rgbRun			= mRgbDepth16u + ( y * width + x );
 				*rgbRun			= shortToPixel( *bufferRun );
 			}
 		}
@@ -316,16 +331,65 @@ void CinderKinect::Obj::pixelToDepthSurface( uint16_t *buffer )
 		}
 	}
 
-	memcpy( mDepthSurface.getData(), mRgbDepth, size );
+	memcpy( mDepthSurface16u.getData(), mRgbDepth16u, size );
 }
 
+// Convert and copy pixel data to a surface
+void CinderKinect::Obj::pixelToSurface8u(Surface8u & surface, uint8_t * buffer, bool depth)
+{
+
+	// Get dimensions
+	int32_t height = surface.getHeight();
+	int32_t width = surface.getWidth();
+	int32_t size = width * height * 3;
+
+	// This is depth data
+	if (depth)
+	{
+
+		// Draw the bits to the bitmap
+		Pixel * rgbRun = mRgbDepth8u;
+		uint16_t * bufferRun = (uint16_t *)buffer;
+		for (int32_t y = 0; y < height; y++)
+			for (int32_t x = 0 ; x < width; x++)
+			{
+				Pixel pixel = shortToPixel8u(* bufferRun);
+				bufferRun++;
+				* rgbRun = pixel;
+				rgbRun++;
+			}
+
+		// Copy depth data to surface
+		memcpy(surface.getData(), (uint8_t *)mRgbDepth8u, size);
+		mNewDepthFrame = true;
+
+	}
+	else
+	{
+
+		// Swap red/blue channels
+		for (int32_t i = 0; i < size; i += 4)
+		{
+			uint8_t b = buffer[i];
+			buffer[i] = buffer[i + 2];
+			buffer[i + 2] = b;
+		}
+
+		// Copy color data to surface
+		memcpy(surface.getData(), buffer, size);
+		mNewVideoFrame = true;
+
+	}
+
+}
 
 CinderKinect::Pixel16u CinderKinect::Obj::shortToPixel( uint16_t value )
 {
-	// Extract depth and user values
+	//Extract depth and user values
 	//uint16_t depth = 0xFFFF - 0x10000 * ( ( value & 0xFFF8 ) >> 3 ) / 0x0FFF;
-	uint16_t depth = 0xFFFF - 0x10000 * ( value ) / 0x0FFF;
-	uint16_t user = value & 7;
+	uint16_t depth = 0xFFFF - 0x10000 * (value) / 0x0FFF;
+	//uint16_t user = value & 7;
+	uint16_t user = 0;
 	
 	CinderKinect::Pixel16u pixel;
 	pixel.b = 0;
@@ -408,6 +472,95 @@ CinderKinect::Pixel16u CinderKinect::Obj::shortToPixel( uint16_t value )
 	pixel.b = 0xFFFF - pixel.b;
 
 	return pixel;
+}
+
+
+// Convert value to short to pixel
+CinderKinect::Pixel CinderKinect::Obj::shortToPixel8u(uint16_t value)
+{
+
+	// Extract depth and user values
+    uint16_t realDepth = value;
+    uint16_t user = 0;
+
+    // Transform 13-bit depth information into an 8-bit intensity appropriate
+    // for display (we disregard information in most significant bit)
+    uint8_t intensity = 255 - (uint8_t)(256 * realDepth / 0x0FFF);
+
+	// Initialize pixel value
+    Pixel pixel;
+	pixel.b = 0;
+	pixel.g = 0;
+	pixel.r = 0;
+
+	// Binary mode
+	if (mBinary)
+	{
+		
+		// Set black and white values
+		uint8_t backgroundColor = mInverted ? 255 : 0;
+		uint8_t userColor = mInverted ? 0 : 255;
+
+		// Set color
+		if (user == 0 || user == 7)
+			pixel.r = pixel.b = pixel.g = mRemoveBackground ? backgroundColor : userColor;
+		else
+			pixel.r = pixel.b = pixel.g = userColor;
+
+	}
+	else
+	{
+
+		// Colorize each user
+		switch (user)
+		{
+		case 0:
+			if (!mRemoveBackground)
+			{
+				pixel.r = intensity / 2;
+				pixel.b = intensity / 2;
+				pixel.g = intensity / 2;
+			}
+			break;
+		case 1:
+			pixel.r = intensity;
+			break;
+		case 2:
+			pixel.g = intensity;
+			break;
+		case 3:
+			pixel.r = intensity / 4;
+			pixel.g = intensity;
+			pixel.b = intensity;
+			break;
+		case 4:
+			pixel.r = intensity;
+			pixel.g = intensity;
+			pixel.b = intensity / 4;
+			break;
+		case 5:
+			pixel.r = intensity;
+			pixel.g = intensity / 4;
+			pixel.b = intensity;
+			break;
+		case 6:
+			pixel.r = intensity / 2;
+			pixel.g = intensity / 2;
+			pixel.b = intensity;
+			break;
+		case 7:
+			if (!mRemoveBackground)
+			{
+				pixel.r = 255 - (intensity / 2);
+				pixel.g = 255 - (intensity / 2);
+				pixel.b = 255 - (intensity / 2);
+			}
+		}
+
+	}
+
+	// Return pixel
+    return pixel;
 
 }
 // ************************************** Buffer management

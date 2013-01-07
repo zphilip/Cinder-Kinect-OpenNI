@@ -74,6 +74,7 @@ void kinectPointCloudApp::setup()
 	// SETUP VBO AND SHADER	
 	createVbo();
 	//mShader	= gl::GlslProg( loadResource( RES_VERT_ID ), loadResource( RES_FRAG_ID ) );
+	mShader	= gl::GlslProg( loadAsset("..\resources\mainVert.glsl"), loadAsset( "..\resources\mainFrag.glsl"));
 	
 	// SETUP GL
 	gl::enableDepthWrite();

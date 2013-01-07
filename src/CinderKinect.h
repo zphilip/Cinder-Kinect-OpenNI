@@ -1,4 +1,4 @@
-/*
+﻿/*
  Copyright (c) 2010, The Cinder Project, All rights reserved.
 
  This code is intended for use with the Cinder C++ library: http://libcinder.org
@@ -37,6 +37,71 @@
 //! @endcond
 
 namespace cinder {
+
+// ポイントクラウド変換クラス
+class DepthParam
+{
+public:
+	XnUInt64 focalLength;
+	XnDouble pixelSize;
+	int uSize, vSize;
+	int uCenter;
+	int vCenter;
+	void setParam( const xn::DepthGenerator &depth )
+	{
+		// get the focal length in mm (ZPS = zero plane distance)
+		depth.GetIntProperty ("ZPD", focalLength );
+		// get the pixel size in mm ("ZPPS" = pixel size at zero plane)
+		depth.GetRealProperty ("ZPPS", pixelSize );
+
+	}
+	void setParam( const xn::DepthMetaData &depthMD )
+	{
+		uSize = depthMD.XRes();
+		vSize = depthMD.YRes();
+		uCenter = uSize / 2;
+		vCenter = vSize / 2;
+
+	}
+	bool depth2point( const XnDepthPixel* depthMap, XnPoint3D *points )
+	{
+		float P2R; // 変換定数
+		P2R = pixelSize * ( 1280 / uSize ) / focalLength; // 変換定数の計算
+		//実際の素子が1280x1024を640x480に変換している為、使うときは２倍しないといけない
+
+		float dist;
+		for (int v = 0; v < vSize; ++v)
+		{
+			for (int u = 0; u < uSize; ++u)
+			{
+				dist = (*depthMap) * 0.001f; //mm -> m
+
+#if 0
+				// カメラ座標系での座標変換
+				// x right
+				// y bottom
+				// z front
+				points->X = dist * P2R * ( u - uCenter );
+				points->Y = dist * P2R * ( v - vCenter );
+				points->Z = dist;
+#else
+				// ロボット座標系での座標変換
+				// x front
+				// y left
+				// z top
+				points->X = dist;
+				points->Y = dist * P2R * ( uCenter - u );
+				points->Z = dist * P2R * ( vCenter - v );
+#endif
+				++depthMap;
+				++points;
+			}
+		}
+		return true;
+	}
+
+};
+
 
 class CinderKinect {
   public:
@@ -101,6 +166,7 @@ class CinderKinect {
 	ImageSourceRef			getVideoImage();
 	ImageSourceRef			getDepthImage();
 	float					getDepthAt( const ci::Vec2i &pos );
+	Surface8u				getDepth();
 	float					RawDepthToMeters(uint16_t raw);
 
 	std::shared_ptr<uint8_t>	getVideoData();
@@ -133,7 +199,9 @@ class CinderKinect {
 		void colorImageCB( CinderKinect::Obj*, const void *);
 		void depthImageCB( CinderKinect::Obj*, const void *);
 		void pixelToDepthSurface( uint16_t *buffer );
+		void pixelToSurface8u(Surface8u & surface, uint8_t * buffer, bool depth);
 		CinderKinect::Pixel16u shortToPixel( uint16_t value );
+		CinderKinect::Pixel  shortToPixel8u(uint16_t value);
 
 		template<typename T>
 		struct BufferManager {
@@ -161,8 +229,10 @@ class CinderKinect {
 
 		BufferManager<uint8_t>			mColorBuffers;
 		BufferManager<uint16_t>			mDepthBuffers;
-		ci::Surface16u					mDepthSurface;
-		Pixel16u						*mRgbDepth;
+		ci::Surface16u					mDepthSurface16u;
+		ci::Surface8u					mDepthSurface8u;
+		Pixel16u						*mRgbDepth16u;
+		Pixel							*mRgbDepth8u;
 
 		volatile bool					mShouldDie;
 		volatile bool					mVideoInfrared;

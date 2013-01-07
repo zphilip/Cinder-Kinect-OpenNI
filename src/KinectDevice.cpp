@@ -193,7 +193,7 @@ bool KinectDevice::Update()
 	readFrame();
 	//parse data to texture
 	ParseColorDepthData(&depthMetaData,&sceneMetaData,&imageMetaData);
-	//ParseColoredDepthData(&depthMetaData,DepthColoringType::RAINBOW);
+	ParseColoredDepthData(&depthMetaData,DepthColoringType::RAINBOW);
 	//Parse3DDepthData(&depthMetaData);
 	//m_DepthPointCloud->updataPointCloud(&depthMetaData);
 	return true;

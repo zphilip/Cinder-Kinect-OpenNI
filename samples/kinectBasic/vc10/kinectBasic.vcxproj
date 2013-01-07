@@ -47,7 +47,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\src;..\..\..\;..\include;F:\My Lab\My Kinect\3rdPartyLibs\cinder_0.8.4_vc2010\include;F:\My Lab\My Kinect\3rdPartyLibs\cinder_0.8.4_vc2010\boost;$(OPEN_NI_INCLUDE);$(XN_NITE_INSTALL_PATH)\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\src;..\..\..\;..\include;$(CINDER_ROOT)\include;$(CINDER_ROOT)\boost;$(OPEN_NI_INCLUDE);$(XN_NITE_INSTALL_PATH)\Include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -58,11 +58,11 @@
       <DebugInformationFormat>EditAndContinue</DebugInformationFormat>
     </ClCompile>
     <ResourceCompile>
-      <AdditionalIncludeDirectories>..\..\..\..\..\include;..\include;F:\My Lab\My Kinect\3rdPartyLibs\cinder_0.8.4_vc2010\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\include;$(CINDER_ROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>XnVNITE_1_5_2.lib;openNI.lib;cinder_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\..\..\..\..\lib;..\..\..\..\..\lib\msw;F:\My Lab\My Kinect\3rdPartyLibs\cinder_0.8.4_vc2010\lib;F:\My Lab\My Kinect\3rdPartyLibs\cinder_0.8.4_vc2010\lib\msw;$(OPEN_NI_LIB);$(XN_NITE_INSTALL_PATH)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CINDER_ROOT)\lib;$(CINDER_ROOT)\lib\msw;$(OPEN_NI_LIB);$(XN_NITE_INSTALL_PATH)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
