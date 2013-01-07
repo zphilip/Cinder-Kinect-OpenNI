@@ -245,6 +245,7 @@ class CinderKinect {
 		bool							mGreyScale;
 		bool							mInverted;
 		bool							mRemoveBackground;
+		unsigned short					mMaxDepth;
 	};
 
   protected:

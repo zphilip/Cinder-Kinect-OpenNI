@@ -201,7 +201,7 @@ void CinderKinect::Obj::depthImageCB( CinderKinect::Obj* kinectObj, const void *
 	}*/
 	memcpy( destPixels, d, 640 * 480 * sizeof(uint16_t) );	
 	pixelToDepthSurface( (uint16_t*)d );
-	//pixelToSurface8u(mDepthSurface8u, (uint8_t *)d, true);
+	pixelToSurface8u(mDepthSurface8u, (uint8_t *)d, true);
 	kinectObj->mNewDepthFrame = true;								// flag that there's a new depth frame
 	kinectObj->mDepthBuffers.setActiveBuffer( (uint16_t *)destPixels );			// set this new buffer to be the current active buffer
 }
@@ -211,9 +211,11 @@ void CinderKinect::threadedFunc( CinderKinect::Obj *kinectObj )
 	while( ! kinectObj->mShouldDie )
 	{
 		kinectObj->mDevice->Update();
-		const XnDepthPixel* pDepth = kinectObj->mDevice->getDepthMetaData()->Data();
+		xn::DepthMetaData * pDepthData = kinectObj->mDevice->getDepthMetaData();
+		kinectObj->mMaxDepth = kinectObj->mDevice->getDepthGenerator()->GetDeviceMaxDepth();
+		const XnDepthPixel* pDepthPixel = pDepthData->Data();
 		kinectObj->colorImageCB(kinectObj,kinectObj->mDevice->getColorBuffer() );
-		kinectObj->depthImageCB(kinectObj,pDepth);
+		kinectObj->depthImageCB(kinectObj,pDepthPixel);
 	}
 }
 
@@ -272,9 +274,9 @@ float CinderKinect::getDepthAt( const ci::Vec2i &pos )
 	float depthNorm		= 0.0f;
 	if ( this->mObj->mDepthSurface16u ) {
 		//float depthraw = RawDepthToMeters(this->mObj->mDepthSurface.getPixel( pos ).r)*1000;
-		float depthraw = this->mObj->mDepthSurface16u.getPixel( pos ).r;
-		uint16_t depth	= depthraw;
-		depth			= depth << 2;
+		uint16_t depthraw = this->mObj->mDepthSurface16u.getPixel( pos ).r;
+		uint16_t depth	= 0x10000 - depthraw;
+		depth			= depth;
 		depthNorm		= 1.0f - (float)depth / 65535.0f;
 	}
 	return depthNorm;
@@ -346,7 +348,6 @@ void CinderKinect::Obj::pixelToSurface8u(Surface8u & surface, uint8_t * buffer, 
 	// This is depth data
 	if (depth)
 	{
-
 		// Draw the bits to the bitmap
 		Pixel * rgbRun = mRgbDepth8u;
 		uint16_t * bufferRun = (uint16_t *)buffer;
@@ -386,10 +387,10 @@ void CinderKinect::Obj::pixelToSurface8u(Surface8u & surface, uint8_t * buffer, 
 CinderKinect::Pixel16u CinderKinect::Obj::shortToPixel( uint16_t value )
 {
 	//Extract depth and user values
-	//uint16_t depth = 0xFFFF - 0x10000 * ( ( value & 0xFFF8 ) >> 3 ) / 0x0FFF;
-	uint16_t depth = 0xFFFF - 0x10000 * (value) / 0x0FFF;
+	//uint16_t depth = 0xFFFF - 0x10000 * ( ( value & 0xFFF8 ) >> 3 ) / 0xFFFF;
+	uint16_t depth = 0xFFFF - 0x10000 * (value) / this->mMaxDepth;
 	//uint16_t user = value & 7;
-	uint16_t user = 0;
+	uint16_t user = 7;
 	
 	CinderKinect::Pixel16u pixel;
 	pixel.b = 0;
@@ -485,7 +486,7 @@ CinderKinect::Pixel CinderKinect::Obj::shortToPixel8u(uint16_t value)
 
     // Transform 13-bit depth information into an 8-bit intensity appropriate
     // for display (we disregard information in most significant bit)
-    uint8_t intensity = 255 - (uint8_t)(256 * realDepth / 0x0FFF);
+    uint8_t intensity = 255 - (uint8_t)(256 * realDepth / this->mMaxDepth);
 
 	// Initialize pixel value
     Pixel pixel;

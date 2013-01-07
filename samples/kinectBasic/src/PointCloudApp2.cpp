@@ -220,7 +220,7 @@ void PointCloudApp::update()
 				float depth = mKinect.getDepthAt( Vec2i( x, y ) );
 				// Add position to point list
 				position.z = depth * mCamera.getEyePoint().z * -3.0f;
-				mPoints.push_back( position * Vec3f( 1.1f, -1.1f, 1.0f ) + offset );
+				mPoints.push_back( position * Vec3f( 1.0f, -1.0f, 1.0f ) + offset );
 
 				// Shift point
 				position.x++;

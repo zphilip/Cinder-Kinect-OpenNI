@@ -103,15 +103,15 @@ void PointCloudApp::draw()
 	// Draw points
 	gl::color(ColorAf::white());
 	glBegin(GL_POINTS);
-	for_each(mPoints.cbegin(), mPoints.cend(), [](const Vec3f & point)
-	{
-		glVertex3f(point);
-	});
-	//for ( vector<Vec3f>::const_iterator pointIt = mPoints.cbegin(); pointIt != mPoints.cend(); ++pointIt ) {
-	//	float depth = 1.0f - pointIt->z / mCamera.getEyePoint().z * -1.5f;
-	//	gl::color( ColorAf( 1.0f, depth, 1.0f - depth, depth ) );
-	//	gl::vertex( *pointIt );
-	//}
+	//for_each(mPoints.cbegin(), mPoints.cend(), [](const Vec3f & point)
+	//{
+	//	glVertex3f(point);
+	//});
+	for ( vector<Vec3f>::const_iterator pointIt = mPoints.cbegin(); pointIt != mPoints.cend(); ++pointIt ) {
+		float depth = 1.0f - pointIt->z / mCamera.getEyePoint().z * -1.5f;
+		gl::color( ColorAf( 1.0f, depth, 1.0f - depth, depth ) );
+		gl::vertex( *pointIt );
+	}
 	glEnd();
 	glPopMatrix();
 
@@ -203,7 +203,7 @@ void PointCloudApp::setup()
 	mArcball = Arcball( getWindowSize() );
 	mArcball.setRadius( (float)getWindowHeight() );
 	// Point scaling
-	mScale = 2.0f;
+	mScale = 1.0f;
 	mSpacing.set(1.0f / 320.0f, -1.0f / 240.0f, 1.0f / 255.0f);
 	mOffset.set(-1.0f, 1.0f, 0.0f);
 
