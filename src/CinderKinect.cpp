@@ -276,7 +276,7 @@ float CinderKinect::getDepthAt( const ci::Vec2i &pos )
 		//float depthraw = RawDepthToMeters(this->mObj->mDepthSurface.getPixel( pos ).r)*1000;
 		uint16_t depthraw = this->mObj->mDepthSurface16u.getPixel( pos ).r;
 		uint16_t depth	= 0x10000 - depthraw;
-		depth			= depth;
+		depth			= depth<<2;
 		depthNorm		= 1.0f - (float)depth / 65535.0f;
 	}
 	return depthNorm;
@@ -388,9 +388,9 @@ CinderKinect::Pixel16u CinderKinect::Obj::shortToPixel( uint16_t value )
 {
 	//Extract depth and user values
 	//uint16_t depth = 0xFFFF - 0x10000 * ( ( value & 0xFFF8 ) >> 3 ) / 0xFFFF;
-	uint16_t depth = 0xFFFF - 0x10000 * (value) / this->mMaxDepth;
+	uint16_t depth = 0xFFFF - 0x10000 * (value&0x3FFF) / this->mMaxDepth;
 	//uint16_t user = value & 7;
-	uint16_t user = 7;
+	uint16_t user = 0;
 	
 	CinderKinect::Pixel16u pixel;
 	pixel.b = 0;
@@ -428,7 +428,7 @@ CinderKinect::Pixel16u CinderKinect::Obj::shortToPixel( uint16_t value )
 		switch ( user ) {
 		case 0:
 			if ( !mRemoveBackground ) {
-				pixel.r = depth / 4;
+				pixel.r = depth/4;
 				pixel.g = pixel.r;
 				pixel.b = pixel.g;
 			}
