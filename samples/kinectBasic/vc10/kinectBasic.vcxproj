@@ -108,7 +108,7 @@
     <ClCompile Include="..\..\..\src\KinectDevice.cpp" />
     <ClCompile Include="..\..\..\src\KinectDeviceManager.cpp" />
     <ClCompile Include="..\..\..\src\KinectWINSDK.cpp" />
-    <ClCompile Include="..\src\kinectMesh.cpp" />
+    <ClCompile Include="..\src\PointCloudApp2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\CinderKinect.h" />
