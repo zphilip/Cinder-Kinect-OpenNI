@@ -8,7 +8,7 @@
 #include "cinder/Utilities.h"
 #include "cinder/ImageIo.h"
 #include "cinder/Rand.h"
-#include "Kinect.h"
+#include "CinderKinect.h"
 #include "Resources.h"
 
 static const int KINECT_X_RES = 640;
@@ -47,7 +47,7 @@ public:
   float       mKinectTilt;
   
   // KINECT AND TEXTURES
-  Kinect                    mKinect;
+  CinderKinect              mKinect;
   gl::Texture               mImageTexture;
   std::shared_ptr<uint16_t> mDepthData;
   
@@ -107,8 +107,8 @@ void kinectMesh::setup()
   mKinectTilt     = 0;
   
   // SETUP KINECT AND TEXTURES
-  console() << "There are " << Kinect::getNumDevices() << " Kinects connected." << std::endl;
-  mKinect     = Kinect( Kinect::Device() ); // use the default Kinect
+  //console() << "There are " << Kinect::getNumDevices() << " Kinects connected." << std::endl;
+  mKinect     =  CinderKinect( CinderKinect::Device() ); // use the default Kinect
   mMinDepth   = 0;
   mMaxDepth   = 64000;
   mTexOffsetX = -0.024;
@@ -176,11 +176,16 @@ void kinectMesh::updateMesh()
     for (int x=0; x<MESH_X_RES; ++x) {
       
       int depth = mDepthData.get()[(y*MESH_DIV)*KINECT_X_RES+(x*MESH_DIV)];
-      
+
       float zPos = zValues[mMinDepth];
       if (mMinDepth <= depth && depth <= mMaxDepth ) {
         zPos = zValues[depth];
+		zPos = depth/10;
       }
+
+	  // Read depth as 0.0 - 1.0 float
+	  //zPos = mKinect.getDepthAt( Vec2i((x*MESH_DIV), (y*MESH_DIV)*KINECT_X_RES ))* depthScale;
+
       mMesh.appendVertex( Vec3f(xValues[x], yValues[y], zPos) );
       if (showTexture) {
         if (showInfrared)
@@ -206,8 +211,8 @@ void kinectMesh::updateMesh()
 
 void kinectMesh::update()
 {
-  if( mKinectTilt != mKinect.getTilt() )
-    mKinect.setTilt( mKinectTilt );
+  //if( mKinectTilt != mKinect.getTilt() )
+  //  mKinect.setTilt( mKinectTilt );
   
   if( !mKinect.checkNewDepthFrame() ) 
     return;
@@ -225,10 +230,10 @@ void kinectMesh::update()
   //  mDepthSurface = mKinect.getDepthImage();
   mDepthData = mKinect.getDepthData();
   
-  if (showInfrared != setShowInfrared) {
-    showInfrared = setShowInfrared;
-    mKinect.setVideoInfrared(showInfrared);
-  }
+  //if (showInfrared != setShowInfrared) {
+  //  showInfrared = setShowInfrared;
+  //  mKinect.setVideoInfrared(showInfrared);
+  //}
   
   if (showWireframe != setShowWireframe) {
     showWireframe = setShowWireframe;

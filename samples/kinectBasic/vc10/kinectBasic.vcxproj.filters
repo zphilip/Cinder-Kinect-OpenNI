@@ -27,7 +27,7 @@
     <ClCompile Include="..\..\..\src\KinectWINSDK.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\PointCloudApp2.cpp">
+    <ClCompile Include="..\src\kinectMesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
