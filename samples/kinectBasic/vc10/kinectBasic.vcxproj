@@ -47,7 +47,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>..\..\..\src;..\..\..\;..\include;$(CINDER_ROOT)\include;$(CINDER_ROOT)\boost;$(OPEN_NI_INCLUDE);$(XN_NITE_INSTALL_PATH)\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>..\..\..\src;..\..\..\;..\include;$(CINDER_ROOT)\include;$(CINDER_ROOT)\boost;$(OPEN_NI_INCLUDE);$(XN_NITE_INSTALL_PATH)\Include;D:\Lib\opencv\build\include</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;NOMINMAX;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>true</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -62,7 +62,7 @@
     </ResourceCompile>
     <Link>
       <AdditionalDependencies>XnVNITE_1_5_2.lib;openNI.lib;cinder_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CINDER_ROOT)\lib;$(CINDER_ROOT)\lib\msw;$(OPEN_NI_LIB);$(XN_NITE_INSTALL_PATH)\Lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(CINDER_ROOT)\lib;$(CINDER_ROOT)\lib\msw;$(OPEN_NI_LIB);$(XN_NITE_INSTALL_PATH)\Lib;D:\Lib\opencv\build\x86\vc10\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -108,7 +108,7 @@
     <ClCompile Include="..\..\..\src\KinectDevice.cpp" />
     <ClCompile Include="..\..\..\src\KinectDeviceManager.cpp" />
     <ClCompile Include="..\..\..\src\KinectWINSDK.cpp" />
-    <ClCompile Include="..\src\PointCloudApp2.cpp" />
+    <ClCompile Include="..\src\NICVSample4.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\CinderKinect.h" />
