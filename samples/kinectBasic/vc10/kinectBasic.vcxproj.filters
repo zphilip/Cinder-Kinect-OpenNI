@@ -27,7 +27,7 @@
     <ClCompile Include="..\..\..\src\KinectWINSDK.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\src\NICVSample4.cpp">
+    <ClCompile Include="..\src\PointCloudApp2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

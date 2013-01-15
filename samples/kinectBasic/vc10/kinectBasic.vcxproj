@@ -61,8 +61,8 @@
       <AdditionalIncludeDirectories>..\include;$(CINDER_ROOT)\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ResourceCompile>
     <Link>
-      <AdditionalDependencies>XnVNITE_1_5_2.lib;openNI.lib;cinder_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>$(CINDER_ROOT)\lib;$(CINDER_ROOT)\lib\msw;$(OPEN_NI_LIB);$(XN_NITE_INSTALL_PATH)\Lib;D:\Lib\opencv\build\x86\vc10\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>XnVNITE_1_5_2.lib;openNI.lib;cinder_d.lib;glut32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(CINDER_ROOT)\lib;$(CINDER_ROOT)\lib\msw;$(OPEN_NI_LIB);$(XN_NITE_INSTALL_PATH)\Lib;D:\Lib\opencv\build\x86\vc10\lib;$(ProjectDir)\..\..\..\gl\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <RandomizedBaseAddress>false</RandomizedBaseAddress>
@@ -108,7 +108,7 @@
     <ClCompile Include="..\..\..\src\KinectDevice.cpp" />
     <ClCompile Include="..\..\..\src\KinectDeviceManager.cpp" />
     <ClCompile Include="..\..\..\src\KinectWINSDK.cpp" />
-    <ClCompile Include="..\src\NICVSample4.cpp" />
+    <ClCompile Include="..\src\PointCloudApp2.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\..\src\CinderKinect.h" />
