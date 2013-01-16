@@ -55,6 +55,14 @@ using namespace std;
 * This application demonstrates how to represent the 
 * Kinect's depth image in 3D space.
 */
+#define MODE_NORMAL  0
+#define MODE_SHADOW  1
+#define MODE_REFLECT 2
+
+#define DEF_WIDTH  640
+#define DEF_HEIGHT 480
+#define FPS_COUNTER_NUM_FRAMES 1000
+
 class PointCloudApp : public ci::app::AppBasic 
 {
 
@@ -71,7 +79,7 @@ public:
 	void update();
 	uint16_t RawDepthToMeters(uint16_t raw);
 	void CreateCube();
-
+	void draw_model(int mode);
 private:
 
 	// Kinect
@@ -87,6 +95,26 @@ private:
 
 	// Save screen shot
 	void					screenShot();
+	struct {
+		Display *disp;
+		int screen;
+		int fullscreen;
+
+		int w, h;
+		int win_w, win_h;
+		unsigned int depth;
+		int doublebuf;
+
+		GLuint tex_ground;
+		GLuint tex_model;
+		int texturing;
+		int color_texture;
+		int lighting;
+		int shadowing;
+		int reflection;
+
+		GLfloat light_pos[4];
+	} appdata;
 };
 
 // Kinect image size
@@ -94,6 +122,7 @@ const Vec2i	kKinectSize( 640, 480 );
 
 float g_rotation = 0;
 float g_rotation_speed = 0.2f;
+double t = 0.0, t_speed = 0.0;
 
 // Render
 void PointCloudApp::draw()
@@ -117,10 +146,20 @@ void PointCloudApp::draw()
 	///	glVertex3f(point);
 	//});
 	glEnd();
-	
+	int paused = TRUE;
 	glPushMatrix();										
-		CreateCube();
+		//CreateCube();
+		t_speed = (t_speed+0.0002*(!paused))*0.9;
+		t += t_speed;
+		glScalef(1.0, -1.0, 1.0);
+		glLightfv(GL_LIGHT0, GL_POSITION, appdata.light_pos);
+		glTranslatef(-0.5, 2.0, 0.0);
+		glRotatef(360.0*t, 4.0, 2.0, 1.0);
+		glTranslatef(-1.0, -0.5, -1.0);
+		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
+		draw_model(MODE_NORMAL);
 	glPopMatrix();	
+	/*
 	glPushMatrix();										
 		glColor3f(1,0,0);
 		glTranslatef(0,0,0);							
@@ -130,7 +169,7 @@ void PointCloudApp::draw()
 	    //glutSolidTeapot(40);
 		glutSolidCube(40);
 	glPopMatrix();	
-	g_rotation += g_rotation_speed;
+	g_rotation += g_rotation_speed;*/
 }
 
 void PointCloudApp::CreateCube()		// Here's Where We Do All The Drawing
@@ -226,6 +265,19 @@ void PointCloudApp::screenShot()
 // Set up
 void PointCloudApp::setup()
 {
+	appdata.win_w = DEF_WIDTH;
+	appdata.win_h = DEF_HEIGHT;
+	appdata.fullscreen = FALSE;
+	appdata.texturing = TRUE;
+	appdata.color_texture = FALSE;
+	appdata.lighting = TRUE;
+	appdata.shadowing = TRUE;
+	appdata.reflection = TRUE;
+	appdata.light_pos[0] = 0.0;
+	appdata.light_pos[1] = 1.0;
+	appdata.light_pos[2] = 0.0;
+	appdata.light_pos[3] = 0.0;
+
 	mKinect = CinderKinect( CinderKinect::Device() );
 
 	// Set up OpenGL
@@ -311,6 +363,172 @@ void PointCloudApp::update()
 
 }
 
+void PointCloudApp::draw_model(int mode) 
+{
+	if(mode == MODE_SHADOW) {
+		glColor4f(0.0,0.0,0.0, 0.8);
+	} else {
+		if(appdata.lighting) {
+			glEnable(GL_LIGHTING);
+		}
+		if(appdata.texturing) {
+			glEnable(GL_TEXTURE_2D);
+			glBindTexture(GL_TEXTURE_2D, appdata.tex_model);
+		}
+		if(!appdata.color_texture) {
+			glColor3f(1.0, 1.0, 1.0);
+		}
+	}
+
+	glBegin(GL_QUADS);
+	 /* Top: */
+	if(mode == MODE_NORMAL) {
+		if(appdata.color_texture) {
+			glColor3f(1.0, 0.0, 0.0);
+		}
+		glNormal3f(0,1,0);
+	}
+
+	glTexCoord2i(0,0);
+	glVertex3i(0,1,0);
+	glTexCoord2i(0,2);
+	glVertex3i(0,1,2);
+	glTexCoord2i(1,2);
+	glVertex3i(1,1,2);
+	glTexCoord2i(1,0);
+	glVertex3i(1,1,0);
+
+	glTexCoord2i(0,0);
+	glVertex3i(1,1,0);
+	glTexCoord2i(0,1);
+	glVertex3i(1,1,1);
+	glTexCoord2i(2,1);
+	glVertex3i(3,1,1);
+	glTexCoord2i(2,0);
+	glVertex3i(3,1,0);
+
+	 /* Front: */
+	if(mode == MODE_NORMAL) {
+		if(appdata.color_texture) {
+			glColor3f(1.0, 1.0, 0.0);
+		}
+		glNormal3f(0,0,1);
+	}
+
+	glTexCoord2i(1,0);
+	glVertex3i(0,0,2);
+	glTexCoord2i(0,0);
+	glVertex3i(1,0,2);
+	glTexCoord2i(0,1);
+	glVertex3i(1,1,2);
+	glTexCoord2i(1,1);
+	glVertex3i(0,1,2);
+
+	glTexCoord2i(2,0);
+	glVertex3i(1,0,1);
+	glTexCoord2i(0,0);
+	glVertex3i(3,0,1);
+	glTexCoord2i(0,1);
+	glVertex3i(3,1,1);
+	glTexCoord2i(2,1);
+	glVertex3i(1,1,1);
+
+	 /* Left: */
+	if(mode == MODE_NORMAL) {
+		if(appdata.color_texture) {
+			glColor3f(0.0, 1.0, 0.0);
+		}
+		glNormal3f(-1,0,0);
+	}
+
+	glTexCoord2i(0,0);
+	glVertex3i(0,0,0);
+	glTexCoord2i(0,2);
+	glVertex3i(0,0,2);
+	glTexCoord2i(1,2);
+	glVertex3i(0,1,2);
+	glTexCoord2i(1,0);
+	glVertex3i(0,1,0);
+
+	 /* Right: */
+	if(mode == MODE_NORMAL) {
+		if(appdata.color_texture) {
+			glColor3f(0.0, 1.0, 1.0);
+		}
+		glNormal3f(1,0,0);
+	}
+
+	glTexCoord2i(1,1);
+	glVertex3i(1,0,2);
+	glTexCoord2i(1,0);
+	glVertex3i(1,0,1);
+	glTexCoord2i(0,0);
+	glVertex3i(1,1,1);
+	glTexCoord2i(0,1);
+	glVertex3i(1,1,2);
+
+	glTexCoord2i(1,1);
+	glVertex3i(3,0,1);
+	glTexCoord2i(1,0);
+	glVertex3i(3,0,0);
+	glTexCoord2i(0,0);
+	glVertex3i(3,1,0);
+	glTexCoord2i(0,1);
+	glVertex3i(3,1,1);
+
+	 /* Back: */
+	if(mode == MODE_NORMAL) {
+		if(appdata.color_texture) {
+			glColor3f(0.0, 0.0, 1.0);
+		}
+		glNormal3f(0,0,-1);
+	}
+
+	glTexCoord2i(3,0);
+	glVertex3i(3,0,0);
+	glTexCoord2i(0,0);
+	glVertex3i(0,0,0);
+	glTexCoord2i(0,1);
+	glVertex3i(0,1,0);
+	glTexCoord2i(3,1);
+	glVertex3i(3,1,0);
+
+	 /* Bottom: */
+	if(mode == MODE_NORMAL) {
+		if(appdata.color_texture) {
+			glColor3f(1.0, 0.0, 1.0);
+		}
+		glNormal3f(0,-1,0);
+	}
+
+	glTexCoord2i(0,0);
+	glVertex3i(1,0,0);
+	glTexCoord2i(0,2);
+	glVertex3i(1,0,2);
+	glTexCoord2i(1,2);
+	glVertex3i(0,0,2);
+	glTexCoord2i(1,0);
+	glVertex3i(0,0,0);
+
+	glTexCoord2i(0,0);
+	glVertex3i(3,0,0);
+	glTexCoord2i(0,1);
+	glVertex3i(3,0,1);
+	glTexCoord2i(2,1);
+	glVertex3i(1,0,1);
+	glTexCoord2i(2,0);
+	glVertex3i(1,0,0);
+	glEnd();
+
+	if(mode == MODE_NORMAL) {
+		if(appdata.lighting) {
+			glDisable(GL_LIGHTING);
+		}
+		if(appdata.texturing) {
+			glDisable(GL_TEXTURE_2D);
+		}
+	}
+}
 
 // Run application
 CINDER_APP_BASIC( PointCloudApp, RendererGl )
