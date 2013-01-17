@@ -148,7 +148,8 @@ void PointCloudApp::draw()
 	glEnd();
 	int paused = TRUE;
 	glPushMatrix();										
-		//CreateCube();
+		CreateCube();
+		/*
 		t_speed = (t_speed+0.0002*(!paused))*0.9;
 		t += t_speed;
 		glScalef(1.0, -1.0, 1.0);
@@ -157,7 +158,7 @@ void PointCloudApp::draw()
 		glRotatef(360.0*t, 4.0, 2.0, 1.0);
 		glTranslatef(-1.0, -0.5, -1.0);
 		glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP);
-		draw_model(MODE_NORMAL);
+		draw_model(MODE_NORMAL);*/
 	glPopMatrix();	
 	/*
 	glPushMatrix();										
@@ -168,9 +169,50 @@ void PointCloudApp::draw()
 		// Draw the teapot
 	    //glutSolidTeapot(40);
 		glutSolidCube(40);
-	glPopMatrix();	
-	g_rotation += g_rotation_speed;*/
+	glPopMatrix();	*/
+	g_rotation += g_rotation_speed;
 }
+
+// Our vertices. Tree consecutive floats give a 3D vertex; Three consecutive vertices give a triangle.
+// A cube has 6 faces with 2 triangles each, so this makes 6*2=12 triangles, and 12*3 vertices
+static const GLfloat g_vertex_buffer_data[] = {
+    -1.0f,-1.0f,-1.0f, // triangle 1 : begin
+    -1.0f,-1.0f, 1.0f,
+    -1.0f, 1.0f, 1.0f, // triangle 1 : end
+    1.0f, 1.0f,-1.0f, // triangle 2 : begin
+    -1.0f,-1.0f,-1.0f,
+    -1.0f, 1.0f,-1.0f, // triangle 2 : end
+    1.0f,-1.0f, 1.0f,
+    -1.0f,-1.0f,-1.0f,
+    1.0f,-1.0f,-1.0f,
+    1.0f, 1.0f,-1.0f,
+    1.0f,-1.0f,-1.0f,
+    -1.0f,-1.0f,-1.0f,
+    -1.0f,-1.0f,-1.0f,
+    -1.0f, 1.0f, 1.0f,
+    -1.0f, 1.0f,-1.0f,
+    1.0f,-1.0f, 1.0f,
+    -1.0f,-1.0f, 1.0f,
+    -1.0f,-1.0f,-1.0f,
+    -1.0f, 1.0f, 1.0f,
+    -1.0f,-1.0f, 1.0f,
+    1.0f,-1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f,-1.0f,-1.0f,
+    1.0f, 1.0f,-1.0f,
+    1.0f,-1.0f,-1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f,-1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f,-1.0f,
+    -1.0f, 1.0f,-1.0f,
+    1.0f, 1.0f, 1.0f,
+    -1.0f, 1.0f,-1.0f,
+    -1.0f, 1.0f, 1.0f,
+    1.0f, 1.0f, 1.0f,
+    -1.0f, 1.0f, 1.0f,
+    1.0f,-1.0f, 1.0f
+};
 
 void PointCloudApp::CreateCube()		// Here's Where We Do All The Drawing
 {
@@ -181,7 +223,14 @@ void PointCloudApp::CreateCube()		// Here's Where We Do All The Drawing
 
 //NEW//////////////////NEW//////////////////NEW//////////////////NEW/////////////
 
-  glTranslatef(0.0f, 0.0f,0.0f);	// Translate Into The Screen 7.0 Units
+   //glEnable(GL_DEPTH_TEST);   // Enable depth testing for z-culling
+   //glDepthFunc(GL_LEQUAL);    // Set the type of depth-test
+   //glShadeModel(GL_SMOOTH);   // Enable smooth shading
+   //glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);  // Nice perspective corrections
+   
+   //glTranslatef(0.0f, 0.0f,0.0f);	// Translate Into The Screen 7.0 Units
+  glLoadIdentity();                  // Reset the model-view matrix
+  glTranslatef(1.5f, 0.0f, -20.0f);  // Move right and into the screen
   glRotatef(g_rotation,0.0f,1.0f,0.0f);	// Rotate The cube around the Y axis
   glRotatef(g_rotation,1.0f,1.0f,1.0f);
   glBegin(GL_QUADS);		// Draw The Cube Using quads
